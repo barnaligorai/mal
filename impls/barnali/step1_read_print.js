@@ -1,6 +1,6 @@
 const readline = require('readline')
 const { read_str } = require('./reader.js')
-const { pr_str } = require('./printer.js')
+const { pr_str } = require('./printer.js');
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -15,7 +15,11 @@ const rep = str => PRINT(EVAL(READ(str)));
 
 const repl = () =>
   rl.question('user> ', line => {
-    console.log(rep(line));
+    try {
+      console.log(rep(line));
+    } catch (error) {
+      console.log(error);
+    }
     repl();
   });
 

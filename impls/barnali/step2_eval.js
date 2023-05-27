@@ -1,7 +1,7 @@
 const readline = require('readline')
 const { read_str } = require('./reader.js')
 const { pr_str } = require('./printer.js');
-const { MalSymbol, MalList, MalValue } = require('./types.js');
+const { MalSymbol, MalList, MalValue, MalVector } = require('./types.js');
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -9,10 +9,10 @@ const rl = readline.createInterface({
 });
 
 const env = {
-  '+': (...args) => args.reduce((a, b) => new MalValue(a.value + b.value)),
-  '-': (...args) => args.reduce((a, b) => new MalValue(a.value - b.value)),
-  '*': (...args) => args.reduce((a, b) => new MalValue(a.value * b.value)),
-  '/': (...args) => args.reduce((a, b) => new MalValue(a.value / b.value)),
+  '+': (...args) => args.reduce((a, b) => a + b),
+  '-': (...args) => args.reduce((a, b) => a - b),
+  '*': (...args) => args.reduce((a, b) => a * b),
+  '/': (...args) => args.reduce((a, b) => a / b),
 };
 
 const eval_ast = (ast, env) => {
@@ -23,6 +23,11 @@ const eval_ast = (ast, env) => {
   if (ast instanceof MalList) {
     const newAst = ast.value.map(x => EVAL(x, env));
     return new MalList(newAst);
+  }
+
+  if (ast instanceof MalVector) {
+    const newAst = ast.value.map(x => EVAL(x, env));
+    return new MalVector(newAst);
   }
 
   return ast;
@@ -37,6 +42,7 @@ const EVAL = (ast, env) => {
   const [fn, ...args] = eval_ast(ast, env).value;
   return fn.apply(null, args);
 };
+
 const PRINT = str => pr_str(str);
 
 const rep = str => PRINT(EVAL(READ(str), env));

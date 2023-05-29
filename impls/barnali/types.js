@@ -14,13 +14,30 @@ class MalSymbol extends MalValue {
   }
 }
 
+class MalString extends MalValue {
+  constructor(value) {
+    super(value);
+  }
+}
+
+class MalKeyword extends MalValue {
+  constructor(value) {
+    super(value);
+  }
+}
+
 class MalList extends MalValue {
   constructor(value) {
     super(value);
   }
 
   pr_str() {
-    return '(' + this.value.map(x => x.pr_str()).join(' ') + ')';
+    return '(' + this.value.map(x => {
+      if (x instanceof MalValue) {
+        return x.pr_str();
+      }
+      return x;
+    }).join(' ') + ')';
   }
 
   is_empty() {
@@ -34,7 +51,30 @@ class MalVector extends MalValue {
   }
 
   pr_str() {
-    return '[' + this.value.map(x => x.pr_str()).join(' ') + ']';
+    return '[' + this.value.map(x => {
+      if (x instanceof MalValue) {
+        return x.pr_str();
+      }
+      return x;
+    }).join(' ') + ']';
+  }
+}
+
+class MalHashMap extends MalValue {
+  constructor(value) {
+    super(value);
+  }
+
+  pr_str() {
+    return '{' + this.value.map((x, i) => {
+      if ((i % 2 != 0) && (i != this.value.length - 1)) {
+        return x + ",";
+      };
+
+      if (x instanceof MalValue) return x.pr_str();
+      return x;
+
+    }).join(' ') + '}';
   }
 }
 
@@ -48,4 +88,4 @@ class MalNil extends MalValue {
   }
 }
 
-module.exports = { MalValue, MalSymbol, MalList, MalVector, MalNil };
+module.exports = { MalValue, MalSymbol, MalList, MalVector, MalHashMap, MalNil, MalString, MalKeyword };

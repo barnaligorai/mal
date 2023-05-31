@@ -48,16 +48,16 @@ const createInnerEnv = (bindingList, env) => {
   return new_env;
 };
 
-const executeDoBlock = (lsitToEval, env) => {
+const evalDo = (listToEval, env) => {
   let result = new MalNil();
-  for (let index = 0; index < lsitToEval.length; index++) {
-    const element = lsitToEval[index];
+  for (let index = 0; index < listToEval.length; index++) {
+    const element = listToEval[index];
     result = EVAL(element, env);
   }
   return result;
 };
 
-const eval_if_block = (condition, ifPart, elsePart) => {
+const evalIf = (condition, ifPart, elsePart) => {
   return !(EVAL(condition, env) instanceof MalNil) ?
     EVAL(ifPart, env) :
     (elsePart ? EVAL(elsePart, env) : new MalNil);
@@ -78,11 +78,11 @@ const EVAL = (ast, env) => {
       const new_env = createInnerEnv(bindingList, env);
       return EVAL(ast.value[2], new_env);
     case 'do':
-      const lsitToEval = ast.value.slice(1);
-      return executeDoBlock(lsitToEval, env);
+      const listToEval = ast.value.slice(1);
+      return evalDo(listToEval, env);
     case 'if':
       const [_, condition, ifPart, elsePart] = ast.value;
-      return eval_if_block(condition, ifPart, elsePart);
+      return evalIf(condition, ifPart, elsePart);
   }
 
   const [fn, ...args] = eval_ast(ast, env).value;
@@ -98,6 +98,12 @@ env.set(new MalSymbol('*'), (...args) => args.reduce((a, b) => a * b, 1));
 env.set(new MalSymbol('-'), (...args) => args.reduce((a, b) => a - b));
 env.set(new MalSymbol('/'), (...args) => args.reduce((a, b) => a / b));
 env.set(new MalSymbol('list'), (...args) => new MalList(args));
+env.set(new MalSymbol('prn'), (...args) => {
+  console.log(args.map(e => pr_str(e)).join(" "));
+  return new MalNil();
+});
+env.set(new MalSymbol('count'), (...args) =>
+  (args[0] instanceof MalNil) ? 0 : args[0].value.length);
 
 const rep = str => PRINT(EVAL(READ(str), env));
 

@@ -18,6 +18,10 @@ class MalString extends MalValue {
   constructor(value) {
     super(value);
   }
+
+  pr_str() {
+    return '\"' + this.value + '\"';
+  }
 }
 
 class MalKeyword extends MalValue {

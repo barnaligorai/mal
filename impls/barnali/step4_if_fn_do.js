@@ -3,6 +3,7 @@ const { read_str } = require('./reader.js')
 const { pr_str } = require('./printer.js');
 const { MalSymbol, MalList, MalVector, MalHashMap, MalNil } = require('./types.js');
 const { Env } = require('./env.js');
+const { ns } = require('./core.js');
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -58,9 +59,20 @@ const evalDo = (listToEval, env) => {
 };
 
 const evalIf = (condition, ifPart, elsePart) => {
-  return !(EVAL(condition, env) instanceof MalNil) ?
+  const result = EVAL(condition, env);
+  return !(result instanceof MalNil || !result) ?
     EVAL(ifPart, env) :
     (elsePart ? EVAL(elsePart, env) : new MalNil);
+};
+
+const evalFn = (bindings, ast, env) => {
+  return (...args) => {
+    const new_env = new Env(env);
+    for (let index = 0; index < args.length; index++) {
+      new_env.set(bindings.value[index], args[index]);
+    }
+    return EVAL(ast, new_env);
+  };
 };
 
 const READ = str => read_str(str);
@@ -73,16 +85,23 @@ const EVAL = (ast, env) => {
     case 'def!':
       env.set(ast.value[1], EVAL(ast.value[2], env));
       return env.get(ast.value[1]);
-    case 'let*':
+    case 'let*': {
       const bindingList = ast.value[1].value;
       const new_env = createInnerEnv(bindingList, env);
       return EVAL(ast.value[2], new_env);
-    case 'do':
+    }
+    case 'do': {
       const listToEval = ast.value.slice(1);
       return evalDo(listToEval, env);
-    case 'if':
+    }
+    case 'if': {
       const [_, condition, ifPart, elsePart] = ast.value;
       return evalIf(condition, ifPart, elsePart);
+    }
+    case 'fn*': {
+      const [_, args, body] = ast.value;
+      return evalFn(args, body, env);
+    }
   }
 
   const [fn, ...args] = eval_ast(ast, env).value;
@@ -93,17 +112,7 @@ const EVAL = (ast, env) => {
 const PRINT = str => pr_str(str);
 
 const env = new Env();
-env.set(new MalSymbol('+'), (...args) => args.reduce((a, b) => a + b, 0));
-env.set(new MalSymbol('*'), (...args) => args.reduce((a, b) => a * b, 1));
-env.set(new MalSymbol('-'), (...args) => args.reduce((a, b) => a - b));
-env.set(new MalSymbol('/'), (...args) => args.reduce((a, b) => a / b));
-env.set(new MalSymbol('list'), (...args) => new MalList(args));
-env.set(new MalSymbol('prn'), (...args) => {
-  console.log(args.map(e => pr_str(e)).join(" "));
-  return new MalNil();
-});
-env.set(new MalSymbol('count'), (...args) =>
-  (args[0] instanceof MalNil) ? 0 : args[0].value.length);
+Object.entries(ns).forEach(([symbol, funcBody]) => env.set(new MalSymbol(symbol), funcBody));
 
 const rep = str => PRINT(EVAL(READ(str), env));
 

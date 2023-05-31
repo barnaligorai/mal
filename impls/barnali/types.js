@@ -1,3 +1,10 @@
+const isEqual = (a, b) => {
+  if (a instanceof MalValue && b instanceof MalValue) {
+    return a.equals(b);
+  }
+  return a === b;
+};
+
 class MalValue {
   constructor(value) {
     this.value = value;
@@ -5,6 +12,10 @@ class MalValue {
 
   pr_str() {
     return this.value.toString();
+  }
+
+  equals(item) {
+    return this.value === item.value;
   }
 }
 
@@ -47,6 +58,12 @@ class MalList extends MalValue {
   is_empty() {
     return this.value.length === 0;
   }
+
+  equals(item) {
+    if (item instanceof MalList || item instanceof MalVector) {
+      return this.value.every((x, i) => isEqual(x, item.value[i]));
+    }
+  }
 }
 
 class MalVector extends MalValue {
@@ -61,6 +78,12 @@ class MalVector extends MalValue {
       }
       return x;
     }).join(' ') + ']';
+  }
+
+  equals(item) {
+    if (item instanceof MalList || item instanceof MalVector) {
+      return this.value.every((x, i) => isEqual(x, item.value[i]));
+    }
   }
 }
 

@@ -97,6 +97,7 @@ env.set(new MalSymbol('+'), (...args) => args.reduce((a, b) => a + b, 0));
 env.set(new MalSymbol('*'), (...args) => args.reduce((a, b) => a * b, 1));
 env.set(new MalSymbol('-'), (...args) => args.reduce((a, b) => a - b));
 env.set(new MalSymbol('/'), (...args) => args.reduce((a, b) => a / b));
+env.set(new MalSymbol('list'), (...args) => new MalList(args));
 
 const rep = str => PRINT(EVAL(READ(str), env));
 

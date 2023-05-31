@@ -57,6 +57,12 @@ const executeDoBlock = (lsitToEval, env) => {
   return result;
 };
 
+const eval_if_block = (condition, ifPart, elsePart) => {
+  return !(EVAL(condition, env) instanceof MalNil) ?
+    EVAL(ifPart, env) :
+    (elsePart ? EVAL(elsePart, env) : new MalNil);
+};
+
 const READ = str => read_str(str);
 const EVAL = (ast, env) => {
   if (!(ast instanceof MalList)) return eval_ast(ast, env);
@@ -74,6 +80,9 @@ const EVAL = (ast, env) => {
     case 'do':
       const lsitToEval = ast.value.slice(1);
       return executeDoBlock(lsitToEval, env);
+    case 'if':
+      const [_, condition, ifPart, elsePart] = ast.value;
+      return eval_if_block(condition, ifPart, elsePart);
   }
 
   const [fn, ...args] = eval_ast(ast, env).value;

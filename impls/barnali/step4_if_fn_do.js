@@ -60,9 +60,14 @@ const evalDo = (listToEval, env) => {
 
 const evalIf = (condition, ifPart, elsePart, env) => {
   const result = EVAL(condition, env);
+
+  if (result === 0) {
+    return EVAL(ifPart, env);
+  }
+
   return !(result instanceof MalNil || !result) ?
     EVAL(ifPart, env) :
-    (elsePart ? EVAL(elsePart, env) : new MalNil);
+    (elsePart !== undefined ? EVAL(elsePart, env) : new MalNil);
 };
 
 const evalFn = (bindings, body, env) => {

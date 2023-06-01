@@ -1,4 +1,4 @@
-const { MalList, MalNil, MalValue } = require('./types.js');
+const { MalList, MalNil, MalValue, MalString } = require('./types.js');
 const { pr_str } = require('./printer.js');
 
 const isEqual = (item1, item2) => {
@@ -46,6 +46,17 @@ const ns = {
   '<=': (...args) => args.slice(0, -1).every((item, index) => item <= args[index + 1]),
 
   '<': (...args) => args.slice(0, -1).every((item, index) => item < args[index + 1]),
+
+  'not': (...args) => {
+    const value = args[0];
+    if (value === 0) return false;
+    if (value instanceof MalNil) return true;
+    return !value;
+  },
+
+  'str': (...args) => {
+    return new MalString(args.reduce((x, y) => x + (y instanceof MalValue ? y.pr_str() : y), ""))
+  }
 };
 
 module.exports = { ns };

@@ -71,12 +71,8 @@ const evalIf = (condition, ifPart, elsePart, env) => {
 };
 
 const evalFn = (bindings, body, env) => {
-  const new_env = new Env(env);
-
   return (...args) => {
-    for (let index = 0; index < args.length; index++) {
-      new_env.set(bindings.value[index], args[index]);
-    }
+    const new_env = new Env(env, bindings, args);
     return EVAL(body, new_env);
   };
 };

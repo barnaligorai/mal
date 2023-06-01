@@ -58,20 +58,21 @@ const evalDo = (listToEval, env) => {
   return result;
 };
 
-const evalIf = (condition, ifPart, elsePart) => {
+const evalIf = (condition, ifPart, elsePart, env) => {
   const result = EVAL(condition, env);
   return !(result instanceof MalNil || !result) ?
     EVAL(ifPart, env) :
     (elsePart ? EVAL(elsePart, env) : new MalNil);
 };
 
-const evalFn = (bindings, ast, env) => {
+const evalFn = (bindings, body, env) => {
+  const new_env = new Env(env);
+
   return (...args) => {
-    const new_env = new Env(env);
     for (let index = 0; index < args.length; index++) {
       new_env.set(bindings.value[index], args[index]);
     }
-    return EVAL(ast, new_env);
+    return EVAL(body, new_env);
   };
 };
 
@@ -96,7 +97,7 @@ const EVAL = (ast, env) => {
     }
     case 'if': {
       const [_, condition, ifPart, elsePart] = ast.value;
-      return evalIf(condition, ifPart, elsePart);
+      return evalIf(condition, ifPart, elsePart, env);
     }
     case 'fn*': {
       const [_, args, body] = ast.value;

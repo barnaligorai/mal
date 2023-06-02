@@ -115,4 +115,17 @@ class MalNil extends MalValue {
   }
 }
 
-module.exports = { MalValue, MalSymbol, MalList, MalVector, MalHashMap, MalNil, MalString, MalKeyword };
+class MalFunction extends MalValue {
+  constructor(ast, binds, env) {
+    super(ast);
+    this.binds = binds;
+    this.env = env;
+  }
+
+  pr_str() {
+    return '#<function>';
+  }
+}
+
+
+module.exports = { MalValue, MalSymbol, MalList, MalVector, MalHashMap, MalNil, MalString, MalKeyword, MalFunction };

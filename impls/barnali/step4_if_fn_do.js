@@ -38,27 +38,37 @@ const eval_ast = (ast, env) => {
   return ast;
 };
 
-const createInnerEnv = (bindingList, env) => {
-  const new_env = new Env(env);
-
-  for (let index = 0; index < bindingList.length; index += 2) {
-    const symbol = bindingList[index];
-    const value = bindingList[index + 1];
-    new_env.set(symbol, EVAL(value, new_env));
-  }
-  return new_env;
+const handleDef = (ast, env) => {
+  env.set(ast.value[1], EVAL(ast.value[2], env));
+  return env.get(ast.value[1]);
 };
 
-const evalDo = (listToEval, env) => {
-  let result = new MalNil();
-  for (let index = 0; index < listToEval.length; index++) {
-    const element = listToEval[index];
-    result = EVAL(element, env);
+const handleLet = (ast, env) => {
+  const binds = ast.value[1].value;
+  const new_env = new Env(env);
+
+  for (let index = 0; index < binds.length; index += 2) {
+    const symbol = binds[index];
+    const value = binds[index + 1];
+    new_env.set(symbol, EVAL(value, new_env));
   }
+
+  return EVAL(ast.value[2], new_env);
+};
+
+const handleDo = (ast, env) => {
+  const forms = ast.value.slice(1);
+  let result = new MalNil();
+
+  forms.forEach(form => {
+    result = EVAL(form, env);
+  });
+
   return result;
 };
 
-const evalIf = (condition, ifPart, elsePart, env) => {
+const handleIf = (ast, env) => {
+  const [_, condition, ifPart, elsePart] = ast.value;
   const result = EVAL(condition, env);
 
   if (result === 0) {
@@ -70,9 +80,11 @@ const evalIf = (condition, ifPart, elsePart, env) => {
     (elsePart !== undefined ? EVAL(elsePart, env) : new MalNil);
 };
 
-const evalFn = (bindings, body, env) => {
+const handleFn = (ast, env) => {
+  const [_, binds, body] = ast.value;
+
   return (...args) => {
-    const new_env = new Env(env, bindings, args);
+    const new_env = new Env(env, binds, args);
     return EVAL(body, new_env);
   };
 };
@@ -85,29 +97,22 @@ const EVAL = (ast, env) => {
 
   switch (ast.value[0].value) {
     case 'def!':
-      env.set(ast.value[1], EVAL(ast.value[2], env));
-      return env.get(ast.value[1]);
+      return handleDef(ast, env);
     case 'let*': {
-      const bindingList = ast.value[1].value;
-      const new_env = createInnerEnv(bindingList, env);
-      return EVAL(ast.value[2], new_env);
+      return handleLet(ast, env);
     }
     case 'do': {
-      const listToEval = ast.value.slice(1);
-      return evalDo(listToEval, env);
+      return handleDo(ast, env);
     }
     case 'if': {
-      const [_, condition, ifPart, elsePart] = ast.value;
-      return evalIf(condition, ifPart, elsePart, env);
+      return handleIf(ast, env);
     }
     case 'fn*': {
-      const [_, args, body] = ast.value;
-      return evalFn(args, body, env);
+      return handleFn(ast, env);
     }
   }
 
   const [fn, ...args] = eval_ast(ast, env).value;
-
   return fn.apply(null, args);
 };
 

@@ -1,4 +1,4 @@
-const { MalList, MalNil, MalValue, MalString, MalAtom } = require('./types.js');
+const { MalList, MalNil, MalValue, MalString, MalAtom, MalVector } = require('./types.js');
 const { pr_str } = require('./printer.js');
 const { read_str } = require('./reader.js');
 const fs = require('fs');
@@ -72,6 +72,13 @@ const ns = {
   'deref': atom => atom.deref(),
 
   'swap!': (atom, f, ...args) => atom.swap(f, args),
+
+  'cons': (value, list) => new MalList([value, ...list.value]),
+
+  'concat': (...lists) => new MalList(lists.flatMap(x => x.value)),
+
+  'vec': (list) => new MalVector(list.value),
+
 };
 
 module.exports = { ns };

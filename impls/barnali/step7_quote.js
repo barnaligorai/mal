@@ -1,9 +1,10 @@
 const readline = require('readline')
-const { read_str } = require('./reader.js')
-const { pr_str } = require('./printer.js');
 const { MalSymbol, MalList, MalVector, MalHashMap, MalNil, MalFunction } = require('./types.js');
 const { Env } = require('./env.js');
 const { ns } = require('./core.js');
+
+const { read_str } = require('./reader.js')
+const { pr_str } = require('./printer.js');
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -47,13 +48,14 @@ const handleLet = (ast, env) => {
   const [binds, ...forms] = ast.value.slice(1);
   const new_env = new Env(env);
 
-  for (let index = 0; index < binds.length; index += 2) {
-    const symbol = binds[index];
-    const value = binds[index + 1];
+  for (let index = 0; index < binds.value.length; index += 2) {
+    const symbol = binds.value[index];
+    const value = binds.value[index + 1];
     new_env.set(symbol, EVAL(value, new_env));
   }
 
   const doForms = new MalList([new MalSymbol('do'), ...forms]);
+
   return [doForms, new_env];
 };
 
@@ -88,6 +90,47 @@ const handleFn = (ast, env) => {
   return new MalFunction(doForms, binds, env, fn);
 };
 
+const quasiquote = (ast) => {
+  if (
+    ast instanceof MalList && ast.beginsWith('unquote')) return ast.value[1];
+
+  if (ast instanceof MalList) {
+    let result = new MalList([]);
+
+    for (let index = ast.value.length - 1; index >= 0; index--) {
+      const element = ast.value[index];
+
+      if (element instanceof MalList && element.beginsWith('splice-unquote')) {
+        result = new MalList([new MalSymbol('concat'), element.value[1], result]);
+      } else {
+        result = new MalList([new MalSymbol('cons'), quasiquote(element), result]);
+      }
+    }
+    return result;
+  }
+
+  if (ast instanceof MalVector) {
+    let result = new MalList([]);
+
+    for (let index = ast.value.length - 1; index >= 0; index--) {
+      const element = ast.value[index];
+
+      if (element instanceof MalList && element.beginsWith('splice-unquote')) {
+        result = new MalList([new MalSymbol('concat'), element.value[1], result]);
+      } else {
+        result = new MalList([new MalSymbol('cons'), quasiquote(element), result]);
+      }
+    }
+    return new MalList([new MalSymbol('vec'), result]);
+  }
+
+  if (ast instanceof MalSymbol) {
+    return new MalList([new MalSymbol('quote'), ast]);
+  }
+
+  return ast;
+};
+
 const READ = str => read_str(str);
 const EVAL = (ast, env) => {
   while (true) {
@@ -98,22 +141,25 @@ const EVAL = (ast, env) => {
     switch (ast.value[0].value) {
       case 'def!':
         return handleDef(ast, env);
-      case 'let*': {
+      case 'let*':
         [ast, env] = handleLet(ast, env);
         break;
-      }
-      case 'do': {
+      case 'do':
         ast = handleDo(ast, env);
         break;
-      }
-      case 'if': {
+      case 'if':
         ast = handleIf(ast, env);
         break;
-      }
-      case 'fn*': {
+      case 'fn*':
         ast = handleFn(ast, env);
         break;
-      }
+      case 'quote':
+        return ast.value[1];
+      case 'quasiquoteexpand':
+        return quasiquote(ast.value[1]);
+      case 'quasiquote':
+        ast = quasiquote(ast.value[1]);
+        break;
       default:
         const [fn, ...args] = eval_ast(ast, env).value;
         if (fn instanceof MalFunction) {
@@ -138,7 +184,7 @@ const createReplEnv = (env) => {
   rep('(def! load-file (fn* (f) (eval (read-string (str "(do " (slurp f) "\nnil)")))))');
 };
 
-const PRINT = str => pr_str(str);
+const PRINT = str => pr_str(str, true);
 
 const env = new Env();
 const rep = str => PRINT(EVAL(READ(str), env));

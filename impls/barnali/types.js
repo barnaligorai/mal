@@ -1,3 +1,9 @@
+const pr_str = (val, printReadably) => {
+  if (val instanceof MalValue) return val.pr_str(printReadably);
+  if (val instanceof MalFunction) return "#<function>";
+  return val.toString();
+};
+
 const isEqual = (a, b) => {
   if (a instanceof MalValue && b instanceof MalValue) {
     return a.equals(b);
@@ -11,7 +17,7 @@ class MalValue {
   }
 
   pr_str(printReadably = false) {
-    return this.value.toString();
+    return "--default Mal Value--";
   }
 
   equals(item) {
@@ -84,13 +90,8 @@ class MalList extends MalValue {
     super(value);
   }
 
-  pr_str(printReadably = false) {
-    return '(' + this.value.map(x => {
-      if (x instanceof MalValue) {
-        return x.pr_str();
-      }
-      return x;
-    }).join(' ') + ')';
+  pr_str(printReadably) {
+    return '(' + this.value.map(x => pr_str(x, printReadably)).join(" ") + ')';
   }
 
   is_empty() {
@@ -102,6 +103,11 @@ class MalList extends MalValue {
       return this.value.every((x, i) => isEqual(x, item.value[i]));
     }
   }
+
+  beginsWith(symbol) {
+    return this.value.length > 0 &&
+      this.value[0].value === symbol;
+  }
 }
 
 class MalVector extends MalValue {
@@ -110,12 +116,7 @@ class MalVector extends MalValue {
   }
 
   pr_str(printReadably = false) {
-    return '[' + this.value.map(x => {
-      if (x instanceof MalValue) {
-        return x.pr_str();
-      }
-      return x;
-    }).join(' ') + ']';
+    return '[' + this.value.map(x => pr_str(x, printReadably)).join(" ") + ']';
   }
 
   equals(item) {
@@ -161,7 +162,7 @@ class MalFunction extends MalValue {
     this.fn = fn;
   }
 
-  pr_str(printReadably = false) {
+  pr_str(printReadably) {
     return '#<function>';
   }
 
@@ -173,15 +174,5 @@ class MalFunction extends MalValue {
 const createMalString = str =>
   new MalString(str.replace(/\\(.)/g, (y, captured) => captured === 'n' ? '\n' : captured));
 
-const pr_str = (val, print_readably = false) => {
-  if (val instanceof MalValue) {
-    return val.pr_str(print_readably);
-  }
-
-  if (val instanceof MalFunction) {
-    return "#<function>";
-  }
-  return val.toString();
-}
 
 module.exports = { MalValue, MalSymbol, MalList, MalVector, MalHashMap, MalNil, MalString, MalKeyword, MalFunction, MalAtom, createMalString, pr_str };

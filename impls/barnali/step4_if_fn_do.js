@@ -119,9 +119,16 @@ const EVAL = (ast, env) => {
 const PRINT = str => pr_str(str);
 
 const env = new Env();
-Object.entries(ns).forEach(([symbol, funcBody]) => env.set(new MalSymbol(symbol), funcBody));
 
 const rep = str => PRINT(EVAL(READ(str), env));
+
+const createReplEnv = () => {
+  Object.entries(ns).forEach(([symbol, funcBody]) => env.set(new MalSymbol(symbol), funcBody));
+
+  rep("(def! not (fn* [x] (if x false true)))");
+};
+
+createReplEnv();
 
 const repl = () =>
   rl.question('user> ', line => {

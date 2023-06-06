@@ -1,5 +1,7 @@
-const { MalList, MalNil, MalValue, MalString } = require('./types.js');
+const { MalList, MalNil, MalValue, MalString, MalAtom } = require('./types.js');
 const { pr_str } = require('./printer.js');
+const { read_str } = require('./reader.js');
+const fs = require('fs');
 
 const isEqual = (item1, item2) => {
   if (Array.isArray(item1) && Array.isArray(item2) && item1.length === item2.length) {
@@ -18,20 +20,6 @@ const ns = {
   '*': (...args) => args.reduce((a, b) => a * b, 1),
   '-': (...args) => args.reduce((a, b) => a - b),
   '/': (...args) => args.reduce((a, b) => a / b),
-
-  'list': (...args) => new MalList(args),
-
-  'prn': (...args) => {
-    console.log(args.map(e => pr_str(e)).join(" "));
-    return new MalNil();
-  },
-
-  'count': (...args) => (args[0] instanceof MalNil) ? 0 : args[0].value.length,
-
-  'empty?': (...args) => (args[0].value.length > 0) ? false : true,
-
-  'list?': (...args) => (args[0] instanceof MalList) ? true : false,
-
   '=': (...args) => args.slice(0, -1).every((item, index) => {
     if (item instanceof MalValue && args[index + 1] instanceof MalValue) {
       return isEqual(item.value, args[index + 1].value);
@@ -47,16 +35,43 @@ const ns = {
 
   '<': (...args) => args.slice(0, -1).every((item, index) => item < args[index + 1]),
 
-  'not': (...args) => {
-    const value = args[0];
-    if (value === 0) return false;
-    if (value instanceof MalNil) return true;
-    return !value;
+  'list': (...args) => new MalList(args),
+
+  'list?': (...args) => (args[0] instanceof MalList) ? true : false,
+
+  'count': (...args) => (args[0] instanceof MalNil) ? 0 : args[0].value.length,
+
+  'empty?': (...args) => (args[0].value.length > 0) ? false : true,
+
+  'pr-str': (...args) => pr_str(new MalString(args.map(x => pr_str(x, true)).join(" ")), true),
+
+  'println': (...args) => {
+    const str = args.map(x => pr_str(x, false)).join(" ");
+    console.log(str);
+    return new MalNil;
   },
 
-  'str': (...args) => {
-    return new MalString(args.reduce((x, y) => x + (y instanceof MalValue ? y.pr_str() : y), ""))
-  }
+  'prn': (...args) => {
+    const str = args.map(x => pr_str(x, true)).join(" ");
+    console.log(str);
+    return new MalNil;
+  },
+
+  'str': (...args) => new MalString(args.map(x => pr_str(x, false)).join("")),
+
+  'read-string': (string) => read_str(string.value),
+
+  'slurp': fileName => new MalString(fs.readFileSync(fileName.value, 'utf8')),
+
+  'atom': value => new MalAtom(value),
+
+  'atom?': value => value instanceof MalAtom,
+
+  'reset!': (atom, value) => atom.reset(value),
+
+  'deref': atom => atom.deref(),
+
+  'swap!': (atom, f, ...args) => atom.swap(f, args),
 };
 
 module.exports = { ns };

@@ -1,4 +1,4 @@
-const { MalSymbol, MalList, MalVector, MalNil, MalHashMap, MalString, MalKeyword } = require('./types.js');
+const { MalSymbol, MalList, MalVector, MalNil, MalHashMap, MalKeyword, createMalString } = require('./types.js');
 
 class Reader {
 
@@ -20,8 +20,7 @@ class Reader {
 
 const tokenize = str => {
   const re = /[\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"?|;.*|[^\s\[\]{}('"`,;)]*)/g;
-
-  return [...str.matchAll(re)].map(x => x[1]).slice(0, -1);
+  return [...str.matchAll(re)].map(x => x[1]).slice(0, -1).filter(y => !y.startsWith(';'));
 };
 
 const read_seq = (reader, closingSymbol) => {
@@ -37,7 +36,7 @@ const read_seq = (reader, closingSymbol) => {
 
   reader.next();
   return ast;
-}
+};
 
 const read_list = reader => {
   const ast = read_seq(reader, ')');
@@ -56,26 +55,23 @@ const read_map = reader => {
 
 const read_atom = reader => {
   const token = reader.next();
-  if (token.match(/^-?[0-9]+$/)) {
-    return (parseInt(token));
-  }
-  if (token === 'true') {
-    return true;
-  }
-  if (token === 'false') {
-    return false;
-  }
-  if (token === 'nil') {
-    return new MalNil();
-  }
-  if (token.startsWith('\"')) {
-    return new MalString(token.slice(1, -1));
-  }
-  if (token.startsWith('\:')) {
-    return new MalKeyword(token);
-  }
+
+  if (token.match(/^-?[0-9]+$/)) return parseInt(token);
+  if (token === 'true') return true;
+  if (token === 'false') return false;
+  if (token === 'nil') return new MalNil();
+  if (token.match(/^"(?:\\.|[^\\"])*"$/)) return createMalString(token.slice(1, -1));
+  if (token.startsWith(':')) return new MalKeyword(token.slice(1));
+
   return new MalSymbol(token);
 };
+
+const prependSymbol = (reader, symbolStr) => {
+  reader.next();
+  const symbol = new MalSymbol(symbolStr);
+  const newAst = read_form(reader);
+  return new MalList([symbol, newAst]);
+}
 
 const read_form = reader => {
   const token = reader.peek();
@@ -86,6 +82,8 @@ const read_form = reader => {
       return read_vector(reader);
     case '{':
       return read_map(reader);
+    case '@':
+      return prependSymbol(reader, 'deref');
     default:
       return read_atom(reader);
   }

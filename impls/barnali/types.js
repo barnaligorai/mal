@@ -17,7 +17,7 @@ class MalValue {
   }
 
   pr_str(printReadably = false) {
-    return "--default Mal Value--";
+    return '--default Mal Value--';
   }
 
   equals(item) {
@@ -67,7 +67,7 @@ class MalAtom extends MalValue {
   }
 
   pr_str(printReadably = false) {
-    return "(atom " + pr_str(this.value, printReadably) + ")";
+    return '(atom ' + pr_str(this.value, printReadably) + ')';
   }
 
   deref() {
@@ -91,7 +91,7 @@ class MalList extends MalValue {
   }
 
   pr_str(printReadably) {
-    return '(' + this.value.map(x => pr_str(x, printReadably)).join(" ") + ')';
+    return '(' + this.value.map(x => pr_str(x, printReadably)).join(' ') + ')';
   }
 
   is_empty() {
@@ -108,6 +108,20 @@ class MalList extends MalValue {
     return this.value.length > 0 &&
       this.value[0].value === symbol;
   }
+
+  nth(n) {
+    if (n >= this.value.length) throw 'index out of range';
+    return this.value[n];
+  }
+
+  first() {
+    if (this.is_empty()) return new MalNil();
+    return this.value[0];
+  }
+
+  rest() {
+    return new MalList(this.value.slice(1));
+  }
 }
 
 class MalVector extends MalValue {
@@ -116,13 +130,33 @@ class MalVector extends MalValue {
   }
 
   pr_str(printReadably = false) {
-    return '[' + this.value.map(x => pr_str(x, printReadably)).join(" ") + ']';
+    return '[' + this.value.map(x => pr_str(x, printReadably)).join(' ') + ']';
+  }
+
+  is_empty() {
+    return this.value.length === 0;
   }
 
   equals(item) {
     if (item instanceof MalList || item instanceof MalVector) {
       return this.value.every((x, i) => isEqual(x, item.value[i]));
     }
+  }
+
+  first() {
+    if (this.is_empty()) {
+      return new MalNil();
+    }
+    return this.value[0];
+  }
+
+  nth(n) {
+    if (n >= this.value.length) throw 'index out of range';
+    return this.value[n];
+  }
+
+  rest() {
+    return new MalList(this.value.slice(1));
   }
 }
 
@@ -134,7 +168,7 @@ class MalHashMap extends MalValue {
   pr_str(printReadably = false) {
     return '{' + this.value.map((x, i) => {
       if ((i % 2 != 0) && (i != this.value.length - 1)) {
-        return x + ",";
+        return x + ',';
       };
 
       if (x instanceof MalValue) return x.pr_str();
@@ -152,14 +186,23 @@ class MalNil extends MalValue {
   pr_str(printReadably = false) {
     return 'nil';
   }
+
+  count() {
+    return 0;
+  }
+
+  first() {
+    return this;
+  }
 }
 
 class MalFunction extends MalValue {
-  constructor(ast, binds, env, fn) {
+  constructor(ast, binds, env, fn, isMacro = false) {
     super(ast);
     this.binds = binds;
     this.env = env;
     this.fn = fn;
+    this.isMacro = isMacro;
   }
 
   pr_str(printReadably) {

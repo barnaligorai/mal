@@ -43,18 +43,19 @@ const ns = {
 
   'empty?': (...args) => (args[0].value.length > 0) ? false : true,
 
-  'pr-str': (...args) => pr_str(new MalString(args.map(x => pr_str(x, true)).join(" ")), true),
+  // 'pr-str': (...args) => pr_str(new MalString(args.map(x => pr_str(x, true)).join(" ")), true),
+  'pr-str': (...args) => new MalString(args.map(x => pr_str(x, true)).join(" ")),
 
   'println': (...args) => {
     const str = args.map(x => pr_str(x, false)).join(" ");
     console.log(str);
-    return new MalNil;
+    return new MalNil();
   },
 
   'prn': (...args) => {
     const str = args.map(x => pr_str(x, true)).join(" ");
     console.log(str);
-    return new MalNil;
+    return new MalNil();
   },
 
   'str': (...args) => new MalString(args.map(x => pr_str(x, false)).join("")),
@@ -79,6 +80,11 @@ const ns = {
 
   'vec': (list) => new MalVector(list.value),
 
+  'nth': (list, n) => list.nth(n),
+
+  'first': (list) => list instanceof MalNil ? new MalNil() : list.first(),
+
+  'rest': (list) => list instanceof MalNil ? new MalList([]) : list.rest(),
 };
 
 module.exports = { ns };

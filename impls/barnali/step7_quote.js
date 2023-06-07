@@ -85,7 +85,7 @@ const handleFn = (ast, env) => {
   const fn = (...args) => {
     const newEnv = new Env(env, ast.value[1], args);
     return EVAL(ast.value[2], newEnv);
-  }
+  };
 
   return new MalFunction(doForms, binds, env, fn);
 };

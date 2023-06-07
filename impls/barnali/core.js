@@ -1,31 +1,15 @@
-const { MalList, MalNil, MalValue, MalString, MalAtom, MalVector } = require('./types.js');
+const { MalList, MalNil, MalValue, MalString, MalAtom, MalVector, isEqual } = require('./types.js');
 const { pr_str } = require('./printer.js');
 const { read_str } = require('./reader.js');
 const fs = require('fs');
-
-const isEqual = (item1, item2) => {
-  if (Array.isArray(item1) && Array.isArray(item2) && item1.length === item2.length) {
-    return item1.every((item, index) => {
-      if (item instanceof MalValue && item2[index] instanceof MalValue) {
-        return item.equals(item2[index]);
-      }
-      return item === item2[index];
-    });
-  }
-  return item1 === item2;
-};
 
 const ns = {
   '+': (...args) => args.reduce((a, b) => a + b, 0),
   '*': (...args) => args.reduce((a, b) => a * b, 1),
   '-': (...args) => args.reduce((a, b) => a - b),
   '/': (...args) => args.reduce((a, b) => a / b),
-  '=': (...args) => args.slice(0, -1).every((item, index) => {
-    if (item instanceof MalValue && args[index + 1] instanceof MalValue) {
-      return isEqual(item.value, args[index + 1].value);
-    }
-    return item === args[index + 1];
-  }),
+
+  '=': (a, b) => isEqual(a, b),
 
   '>': (...args) => args.slice(0, -1).every((item, index) => item > args[index + 1]),
 

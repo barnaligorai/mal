@@ -85,13 +85,13 @@ class MalAtom extends MalValue {
   }
 }
 
-class MalList extends MalValue {
+class MalSeq extends MalValue {
   constructor(value) {
     super(value);
   }
 
-  pr_str(printReadably) {
-    return '(' + this.value.map(x => pr_str(x, printReadably)).join(' ') + ')';
+  pr_str(printReadably, startingSymbol = '(', closingSymbol = ')') {
+    return startingSymbol + this.value.map(x => pr_str(x, printReadably)).join(' ') + closingSymbol;
   }
 
   is_empty() {
@@ -124,39 +124,23 @@ class MalList extends MalValue {
   }
 }
 
-class MalVector extends MalValue {
+class MalList extends MalSeq {
+  constructor(value) {
+    super(value);
+  }
+
+  pr_str(printReadably) {
+    return super.pr_str(printReadably, '(', ')');
+  }
+}
+
+class MalVector extends MalSeq {
   constructor(value) {
     super(value);
   }
 
   pr_str(printReadably = false) {
-    return '[' + this.value.map(x => pr_str(x, printReadably)).join(' ') + ']';
-  }
-
-  is_empty() {
-    return this.value.length === 0;
-  }
-
-  equals(item) {
-    if (item instanceof MalList || item instanceof MalVector) {
-      return this.value.every((x, i) => isEqual(x, item.value[i]));
-    }
-  }
-
-  first() {
-    if (this.is_empty()) {
-      return new MalNil();
-    }
-    return this.value[0];
-  }
-
-  nth(n) {
-    if (n >= this.value.length) throw 'index out of range';
-    return this.value[n];
-  }
-
-  rest() {
-    return new MalList(this.value.slice(1));
+    return super.pr_str(printReadably, '[', ']');
   }
 }
 
@@ -218,4 +202,4 @@ const createMalString = str =>
   new MalString(str.replace(/\\(.)/g, (y, captured) => captured === 'n' ? '\n' : captured));
 
 
-module.exports = { MalValue, MalSymbol, MalList, MalVector, MalHashMap, MalNil, MalString, MalKeyword, MalFunction, MalAtom, createMalString, pr_str };
+module.exports = { MalValue, MalSymbol, MalSeq, MalList, MalVector, MalHashMap, MalNil, MalString, MalKeyword, MalFunction, MalAtom, createMalString, pr_str };

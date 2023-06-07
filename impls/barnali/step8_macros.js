@@ -1,5 +1,5 @@
 const readline = require('readline')
-const { MalSymbol, MalList, MalVector, MalHashMap, MalNil, MalFunction } = require('./types.js');
+const { MalSymbol, MalList, MalSeq, MalVector, MalHashMap, MalNil, MalFunction } = require('./types.js');
 const { Env } = require('./env.js');
 const { ns } = require('./core.js');
 
@@ -122,7 +122,7 @@ const quasiquote = (ast) => {
   if (
     ast instanceof MalList && ast.beginsWith('unquote')) return ast.value[1];
 
-  if (ast instanceof MalList) {
+  if (ast instanceof MalSeq) {
     let result = new MalList([]);
 
     for (let index = ast.value.length - 1; index >= 0; index--) {
@@ -133,23 +133,13 @@ const quasiquote = (ast) => {
       } else {
         result = new MalList([new MalSymbol('cons'), quasiquote(element), result]);
       }
+    }
+
+    if (ast instanceof MalVector) {
+      return new MalList([new MalSymbol('vec'), result
+      ]);
     }
     return result;
-  }
-
-  if (ast instanceof MalVector) {
-    let result = new MalList([]);
-
-    for (let index = ast.value.length - 1; index >= 0; index--) {
-      const element = ast.value[index];
-
-      if (element instanceof MalList && element.beginsWith('splice-unquote')) {
-        result = new MalList([new MalSymbol('concat'), element.value[1], result]);
-      } else {
-        result = new MalList([new MalSymbol('cons'), quasiquote(element), result]);
-      }
-    }
-    return new MalList([new MalSymbol('vec'), result]);
   }
 
   if (ast instanceof MalSymbol) {

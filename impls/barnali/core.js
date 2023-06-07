@@ -43,8 +43,7 @@ const ns = {
 
   'empty?': (...args) => (args[0].value.length > 0) ? false : true,
 
-  // 'pr-str': (...args) => pr_str(new MalString(args.map(x => pr_str(x, true)).join(" ")), true),
-  'pr-str': (...args) => new MalString(args.map(x => pr_str(x, true)).join(" ")),
+  'pr-str': (...args) => pr_str(new MalString(args.map(x => pr_str(x, true)).join(" ")), true),
 
   'println': (...args) => {
     const str = args.map(x => pr_str(x, false)).join(" ");
